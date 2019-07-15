@@ -20,6 +20,7 @@ import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.os.SystemClock;
 import android.preference.PreferenceManager;
 import android.support.annotation.NonNull;
 import android.support.design.widget.Snackbar;
@@ -31,12 +32,14 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.Chronometer;
 import android.widget.TextView;
 
 import com.github.anastr.speedviewlib.SpeedView;
 
 import java.math.BigDecimal;
 import java.text.MessageFormat;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Iterator;
 
@@ -58,11 +61,16 @@ public class MainActivity extends AppCompatActivity {
 
     // Message type code.
     private final static int MESSAGE_UPDATE_TEXT_CHILD_THREAD = 1;
-    private TextView textView, txtTimer;
+    private TextView textView;
     private SpeedView speedometer;
-    private Button btnStartStop;
+    private Button btnStartStop, btnTrainings;
     private boolean exists;
     private String name;
+    private long pauseOffset;
+    private boolean running;
+    private Chronometer chronometer;
+    String welcomeUserMessage;
+    ArrayDeque<Long> allRpms = new ArrayDeque<>();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -98,6 +106,7 @@ public class MainActivity extends AppCompatActivity {
 
 
         btnStartStop = findViewById(R.id.start_stop);
+        welcomeUserMessage = MessageFormat.format("{0}{1}", getString(R.string.welcome_user_message), name);
         btnStartStop.setOnClickListener(v -> {
             if (!mRecordingThread.recording()) {
                 startAudioRecordingSafe();
@@ -105,20 +114,29 @@ public class MainActivity extends AppCompatActivity {
                 textView.setText(R.string.activity_started);
                 btnStartStop.setBackgroundColor(btnStopColor);
                 btnStartStop.setText(R.string.stop);
+                startChronometer();
             } else {
                 stop();
                 mRecordingThread.stopRecording();
-                textView.setText(MessageFormat.format("{0}{1}", getString(R.string.welcome_user_message), name));
+                textView.setText(welcomeUserMessage);
                 btnStartStop.setBackgroundColor(btnStartColor);
                 btnStartStop.setText(R.string.start);
+                pauseChronometer();
+
             }
         });
 
+        btnTrainings = findViewById(R.id.btnTrainings);
         speedometer = findViewById(R.id.speedView);
         speedometer.speedTo(50);
         textView = findViewById(R.id.textView2);
-        textView.setText(MessageFormat.format("{0}{1}", getString(R.string.welcome_user_message), name));
-        txtTimer = findViewById(R.id.textTimer);
+        chronometer = findViewById(R.id.chronometer);
+        chronometer.setFormat("%s");
+        chronometer.setBase(SystemClock.elapsedRealtime());
+        chronometer.setVisibility(View.INVISIBLE);
+
+
+        textView.setText(welcomeUserMessage);
 
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(BASE_URL)
@@ -135,7 +153,11 @@ public class MainActivity extends AppCompatActivity {
         sendMessage();
     }
 
-    //TODO Timer dorobit
+    /**
+     * Help method for output real time values
+     *
+     * @param text
+     */
     private void updateText(String text) {
         textView.setText(text);
     }
@@ -155,7 +177,12 @@ public class MainActivity extends AppCompatActivity {
                         }
                         BigDecimal timeFromLastRevolve = new BigDecimal(timeRpm[0] / 1000d);
                         timeFromLastRevolve = timeFromLastRevolve.setScale(2, BigDecimal.ROUND_HALF_UP);
-                        updateText(" time = " + timeFromLastRevolve + " rpm = " + timeRpm[1]);
+//                        updateText(" time = " + timeFromLastRevolve + " rpm = " + timeRpm[1]);
+
+                        if (timeRpm[1] > 15 && timeRpm[1] < 120) {
+                            allRpms.add(timeRpm[1]);
+                        }
+                        updateText(String.valueOf(rpmAverage()));
                         speedometer.speedTo(timeRpm[1], 1000);
                     }
                 }
@@ -185,6 +212,7 @@ public class MainActivity extends AppCompatActivity {
         if (ContextCompat.checkSelfPermission(this, android.Manifest.permission.RECORD_AUDIO)
                 == PackageManager.PERMISSION_GRANTED) {
             mRecordingThread.startRecording();
+
         } else {
             requestMicrophonePermission();
         }
@@ -215,6 +243,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void filterExtremeValues() {
+        overall.remove(1);
         Iterator<OverallStatistics> iter = overall.iterator();
         while (iter.hasNext()) {
             OverallStatistics statistics = iter.next();
@@ -234,4 +263,37 @@ public class MainActivity extends AppCompatActivity {
         Intent intent = new Intent(this, TrainingsActivity.class);
         startActivity(intent);
     }
+
+    public void startChronometer() {
+        if (!running) {
+//            textView.setVisibility(View.INVISIBLE);
+            chronometer.setVisibility(View.VISIBLE);
+            chronometer.setBase(SystemClock.elapsedRealtime());
+            chronometer.start();
+            running = true;
+            btnTrainings.setVisibility(View.INVISIBLE);
+        }
+    }
+
+    public void pauseChronometer() {
+        if (running) {
+            chronometer.stop();
+            chronometer.setBase(SystemClock.elapsedRealtime());
+            running = false;
+            chronometer.setVisibility(View.INVISIBLE);
+//            textView.setVisibility(View.VISIBLE);
+            textView.setText(welcomeUserMessage);
+            btnTrainings.setVisibility(View.VISIBLE);
+        }
+    }
+
+    private double rpmAverage() {
+        double total = 0;
+        for (Long element : allRpms) {
+            total += element;
+        }
+
+        return total / allRpms.size();
+    }
+
 }

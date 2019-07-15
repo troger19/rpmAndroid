@@ -1,15 +1,11 @@
 package com.newventuresoftware.waveformdemo;
 
 import android.app.ProgressDialog;
-import android.content.Intent;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.Toolbar;
 import android.util.Log;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.widget.Toast;
 
 import java.io.IOException;
@@ -67,9 +63,11 @@ public class TrainingsActivity extends AppCompatActivity {
                     progressDialog.dismiss();
                 }
                 Log.i(TAG, "Trainings Retrieved " + response.message());
-                trainingDtos.addAll(response.body());
+                if (response.body() != null) {
+                    trainingDtos.addAll(response.body());
+                }
                 progressDialog.dismiss();
-                recyclerView.setAdapter( new TrainingAdapter(trainingDtos));
+                recyclerView.setAdapter(new TrainingAdapter(trainingDtos));
             }
 
             @Override
