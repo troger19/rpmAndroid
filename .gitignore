@@ -22,7 +22,7 @@
 
 # Sensitive or high-churn files:
 .idea/dataSources.ids
-.idea/dataSources.xml
+.idea/gradle.xml
 .idea/dataSources.local.xml
 .idea/sqlDataSources.xml
 .idea/dynamic.xml
