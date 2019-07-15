@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.alespero.expandablecardview.ExpandableCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/profile"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@android:color/holo_blue_bright"
+    android:keepScreenOn="true"
+    app:animationDuration="300"
+    app:cardBackgroundColor="@android:color/holo_red_dark"
+    app:expandOnClick="true"
+    app:icon="@drawable/ic_baseline_directions_bike_24px"
+    app:inner_view="@layout/mycustomview"
+    app:startExpanded="false"
+    app:title="Title"
+    tools:backgroundTint="@android:color/holo_orange_dark" />

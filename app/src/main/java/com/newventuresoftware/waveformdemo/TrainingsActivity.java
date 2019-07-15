@@ -1,0 +1,82 @@
+package com.newventuresoftware.waveformdemo;
+
+import android.app.ProgressDialog;
+import android.content.Intent;
+import android.support.v7.app.AppCompatActivity;
+import android.os.Bundle;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.Toolbar;
+import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
+import android.widget.Toast;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
+
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
+
+public class TrainingsActivity extends AppCompatActivity {
+    private static final String TAG = TrainingsActivity.class.getSimpleName();
+    private TrainingAdapter adapter;
+    private RecyclerView recyclerView;
+    private JsonPlaceHolderApi jsonPlaceHolderApi;
+
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_trainings);
+
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl(MainActivity.BASE_URL)
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+        jsonPlaceHolderApi = retrofit.create(JsonPlaceHolderApi.class);
+        recyclerView = findViewById(R.id.recycler_view_training_list);
+        RecyclerView.LayoutManager layoutManager = new LinearLayoutManager(TrainingsActivity.this);
+        recyclerView.setLayoutManager(layoutManager);
+        recyclerView.setAdapter(adapter);
+        getAllTrainings();
+    }
+
+    private void getAllTrainings() {
+        final ProgressDialog progressDialog = new ProgressDialog(TrainingsActivity.this);
+        progressDialog.setCancelable(false);
+        progressDialog.setMessage("Please Wait");
+        progressDialog.show();
+
+        ArrayList<TrainingDto> trainingDtos = new ArrayList<>();
+        Call<List<TrainingDto>> call = jsonPlaceHolderApi.getAllTrainings();
+        call.enqueue(new Callback<List<TrainingDto>>() {
+            @Override
+            public void onResponse(Call<List<TrainingDto>> call, Response<List<TrainingDto>> response) {
+                if (!response.isSuccessful()) {
+                    try {
+                        Log.e(TAG, "Error calling Get All Trainings: " + Objects.requireNonNull(response.errorBody()).string());
+                    } catch (IOException e) {
+                        Log.e(TAG, "IOException: " + e);
+                    }
+                    progressDialog.dismiss();
+                }
+                Log.i(TAG, "Trainings Retrieved " + response.message());
+                trainingDtos.addAll(response.body());
+                progressDialog.dismiss();
+                recyclerView.setAdapter( new TrainingAdapter(trainingDtos));
+            }
+
+            @Override
+            public void onFailure(Call<List<TrainingDto>> call, Throwable t) {
+                Toast.makeText(TrainingsActivity.this, t.getMessage(), Toast.LENGTH_LONG).show();
+                progressDialog.dismiss();
+            }
+        });
+    }
+}
