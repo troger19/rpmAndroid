@@ -47,7 +47,6 @@ import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
 public class MainActivity extends AppCompatActivity {
-    //    private WaveformView mRealtimeWaveformView;
     public static final String EXTRA_MESSAGE = "OverallStatistics";
     private RecordingThread mRecordingThread;
     private PlaybackThread mPlaybackThread;
@@ -56,7 +55,7 @@ public class MainActivity extends AppCompatActivity {
     private Handler updateUIHandler = null;
     private ArrayList<OverallStatistics> overall = new ArrayList<>();
     private JsonPlaceHolderApi jsonPlaceHolderApi;
-    public static final String BASE_URL = "http://192.168.100.41:8081/";  //http://192.168.1.52:8081/   //http://192.168.100.41:8081/
+    public static final String BASE_URL = "https://rpmbackend.herokuapp.com/";  //https://rpmbackend.herokuapp.com/   //http://192.168.100.41:8081/
     private static final String TAG = MainActivity.class.getSimpleName();
 
     // Message type code.
@@ -64,13 +63,14 @@ public class MainActivity extends AppCompatActivity {
     private TextView textView;
     private SpeedView speedometer;
     private Button btnStartStop, btnTrainings;
-    private boolean exists;
     private String name;
-    private long pauseOffset;
     private boolean running;
     private Chronometer chronometer;
     String welcomeUserMessage;
     ArrayDeque<Long> allRpms = new ArrayDeque<>();
+    private SharedPreferences preferences;
+    private static final int minRPM = 120;
+    private static final int maxRPM = 15;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -80,7 +80,7 @@ public class MainActivity extends AppCompatActivity {
         setSupportActionBar(toolbar);
         final int btnStartColor = ContextCompat.getColor(getBaseContext(), R.color.button_start);
         final int btnStopColor = ContextCompat.getColor(getBaseContext(), R.color.button_stop);
-        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        preferences = PreferenceManager.getDefaultSharedPreferences(this);
         name = preferences.getString("prf_username", "");
 
         // Initialize Handler.
@@ -145,6 +145,14 @@ public class MainActivity extends AppCompatActivity {
 
         jsonPlaceHolderApi = retrofit.create(JsonPlaceHolderApi.class);
     }
+
+    @Override
+    public void onRestart() {
+        super.onRestart();
+        name = preferences.getString("prf_username", "");
+        textView.setText(MessageFormat.format("{0}{1}", getString(R.string.welcome_user_message), name));
+    }
+
 
     protected void stop() {
         super.onStop();
@@ -247,7 +255,7 @@ public class MainActivity extends AppCompatActivity {
         Iterator<OverallStatistics> iter = overall.iterator();
         while (iter.hasNext()) {
             OverallStatistics statistics = iter.next();
-            if (statistics.getRpm() > 120 || statistics.getRpm() < 15) {
+            if (statistics.getRpm() > minRPM || statistics.getRpm() < maxRPM) {
                 iter.remove();
             }
         }
@@ -266,7 +274,6 @@ public class MainActivity extends AppCompatActivity {
 
     public void startChronometer() {
         if (!running) {
-//            textView.setVisibility(View.INVISIBLE);
             chronometer.setVisibility(View.VISIBLE);
             chronometer.setBase(SystemClock.elapsedRealtime());
             chronometer.start();
@@ -281,7 +288,6 @@ public class MainActivity extends AppCompatActivity {
             chronometer.setBase(SystemClock.elapsedRealtime());
             running = false;
             chronometer.setVisibility(View.INVISIBLE);
-//            textView.setVisibility(View.VISIBLE);
             textView.setText(welcomeUserMessage);
             btnTrainings.setVisibility(View.VISIBLE);
         }
@@ -292,7 +298,6 @@ public class MainActivity extends AppCompatActivity {
         for (Long element : allRpms) {
             total += element;
         }
-
         return total / allRpms.size();
     }
 

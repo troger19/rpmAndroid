@@ -11,16 +11,16 @@ import retrofit2.http.Path;
 
 public interface JsonPlaceHolderApi {
 
-    @GET("allPerson")
-    Call<List<PersonDto>> getAllPersons();
-
-    @POST("create")
+    @POST("training")
     Call<ResponseBody> createTraining(@Body TrainingDto trainingDto);
 
     @GET("person/{name}")
     Call<PersonDto> getPerson(@Path("name") String name);
 
-    @GET("all")
+    @GET("training")
     Call<List<TrainingDto>> getAllTrainings();
+
+    @GET("training/{name}")
+    Call<List<TrainingDto>> getTrainingsByName(@Path("name") String name);
 
 }

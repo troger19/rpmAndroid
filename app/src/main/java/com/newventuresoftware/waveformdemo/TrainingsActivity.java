@@ -1,7 +1,9 @@
 package com.newventuresoftware.waveformdemo;
 
 import android.app.ProgressDialog;
+import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -50,7 +52,9 @@ public class TrainingsActivity extends AppCompatActivity {
         progressDialog.show();
 
         ArrayList<TrainingDto> trainingDtos = new ArrayList<>();
-        Call<List<TrainingDto>> call = jsonPlaceHolderApi.getAllTrainings();
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        String name = preferences.getString("prf_username", "");
+        Call<List<TrainingDto>> call = jsonPlaceHolderApi.getTrainingsByName(name);
         call.enqueue(new Callback<List<TrainingDto>>() {
             @Override
             public void onResponse(Call<List<TrainingDto>> call, Response<List<TrainingDto>> response) {
