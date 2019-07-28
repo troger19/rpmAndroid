@@ -107,11 +107,11 @@ public class DisplayGraphActivity extends AppCompatActivity {
             rpm.add((int) overallStatistics.getRpm());
         }
 
-        double average = calculateAverage(rpm);
+        double average = calculateAverage(rpm); //TODO Overall average?? rpms.size() -> durationInSecondes  / sumOfRpms
 
         LocalDateTime startTime = statistics.get(0).getLocalDateTime();
         LocalDateTime endTime = statistics.get(statistics.size() - 1).getLocalDateTime();
-        int durationInMinutes = Minutes.minutesBetween(startTime, endTime).getMinutes();
+        int durationInMinutes = Minutes.minutesBetween(startTime, endTime).getMinutes(); //TODO replace with seconds
 
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
         String name = preferences.getString("prf_username", "");
