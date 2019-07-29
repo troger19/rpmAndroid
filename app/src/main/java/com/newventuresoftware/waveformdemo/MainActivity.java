@@ -55,8 +55,8 @@ public class MainActivity extends AppCompatActivity {
     private Handler updateUIHandler = null;
     private ArrayList<OverallStatistics> overall = new ArrayList<>();
     private JsonPlaceHolderApi jsonPlaceHolderApi;
-    public static final String BASE_URL = "https://rpmbackend.herokuapp.com/";  //https://rpmbackend.herokuapp.com/   //http://192.168.100.41:8081/
     private static final String TAG = MainActivity.class.getSimpleName();
+    public static final String BASE_URL = "https://rpmbackend.herokuapp.com/";  //https://rpmbackend.herokuapp.com/   //http://192.168.100.41:8081/
 
     // Message type code.
     private final static int MESSAGE_UPDATE_TEXT_CHILD_THREAD = 1;
@@ -138,8 +138,14 @@ public class MainActivity extends AppCompatActivity {
 
         textView.setText(welcomeUserMessage);
 
+//
+//        OkHttpClient okHttpClient = new OkHttpClient.Builder()
+//                .addInterceptor(new AuthenticationInterceptor())
+//                .build();
+
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(BASE_URL)
+//                .client(okHttpClient)
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
 

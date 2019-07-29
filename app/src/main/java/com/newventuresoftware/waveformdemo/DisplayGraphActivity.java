@@ -27,6 +27,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+import okhttp3.OkHttpClient;
 import okhttp3.ResponseBody;
 import retrofit2.Call;
 import retrofit2.Callback;
@@ -68,15 +69,17 @@ public class DisplayGraphActivity extends AppCompatActivity {
         lineChart.setData(lineData);
         lineChart.invalidate();
 
-
+        // REST client initialization
+        AuthenticationInterceptor interceptor = new AuthenticationInterceptor();
+        OkHttpClient client = new OkHttpClient.Builder().addInterceptor(interceptor).build();
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(BASE_URL)
+                .client(client)
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
 
         jsonPlaceHolderApi = retrofit.create(JsonPlaceHolderApi.class);
         convertToTrainingDto(list);
-
     }
 
     /**
