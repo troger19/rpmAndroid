@@ -43,6 +43,7 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Iterator;
 
+import okhttp3.OkHttpClient;
 import retrofit2.Retrofit;
 import retrofit2.converter.gson.GsonConverterFactory;
 
@@ -137,15 +138,12 @@ public class MainActivity extends AppCompatActivity {
 
 
         textView.setText(welcomeUserMessage);
-
-//
-//        OkHttpClient okHttpClient = new OkHttpClient.Builder()
-//                .addInterceptor(new AuthenticationInterceptor())
-//                .build();
-
+        // REST client initialization
+        AuthenticationInterceptor interceptor = new AuthenticationInterceptor();
+        OkHttpClient client = new OkHttpClient.Builder().addInterceptor(interceptor).build();
         Retrofit retrofit = new Retrofit.Builder()
                 .baseUrl(BASE_URL)
-//                .client(okHttpClient)
+                .client(client)
                 .addConverterFactory(GsonConverterFactory.create())
                 .build();
 
