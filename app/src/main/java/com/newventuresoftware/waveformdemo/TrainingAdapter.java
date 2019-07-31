@@ -8,6 +8,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+
 import com.alespero.expandablecardview.ExpandableCardView;
 
 import java.text.DateFormat;
@@ -63,7 +64,7 @@ public class TrainingAdapter extends RecyclerView.Adapter<TrainingAdapter.Traini
     }
 
     private String trimTrainingDate(Date trainingDate){
-        DateFormat dateFormat = new SimpleDateFormat("EEE dd.MM.yyyy HH:mm:ss");
+        DateFormat dateFormat = new SimpleDateFormat("EEE dd.MM.yyyy HH:mm");
         return dateFormat.format(trainingDate);
     }
 }

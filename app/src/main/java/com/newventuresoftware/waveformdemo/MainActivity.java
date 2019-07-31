@@ -50,7 +50,6 @@ import retrofit2.converter.gson.GsonConverterFactory;
 public class MainActivity extends AppCompatActivity {
     public static final String EXTRA_MESSAGE = "OverallStatistics";
     private RecordingThread mRecordingThread;
-    private PlaybackThread mPlaybackThread;
     private static final int REQUEST_RECORD_AUDIO = 13;
     // This is the activity main thread Handler.
     private Handler updateUIHandler = null;

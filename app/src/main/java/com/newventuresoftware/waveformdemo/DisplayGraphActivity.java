@@ -18,7 +18,7 @@ import com.github.mikephil.charting.data.LineDataSet;
 import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
 
 import org.joda.time.LocalDateTime;
-import org.joda.time.Minutes;
+import org.joda.time.Seconds;
 
 import java.io.IOException;
 import java.math.BigDecimal;
@@ -110,23 +110,22 @@ public class DisplayGraphActivity extends AppCompatActivity {
             rpm.add((int) overallStatistics.getRpm());
         }
 
-        double average = calculateAverage(rpm); //TODO Overall average?? rpms.size() -> durationInSecondes  / sumOfRpms
-
         LocalDateTime startTime = statistics.get(0).getLocalDateTime();
         LocalDateTime endTime = statistics.get(statistics.size() - 1).getLocalDateTime();
-        int durationInMinutes = Minutes.minutesBetween(startTime, endTime).getMinutes(); //TODO replace with seconds
+        int durationInSeconds = Seconds.secondsBetween(startTime, endTime).getSeconds(); //TODO replace with seconds
 
+        double average = calculateAverage(rpm, durationInSeconds); //TODO Overall average?? rpms.size() -> durationInSecondes  / sumOfRpms
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
         String name = preferences.getString("prf_username", "");
 
         trainingDto = new TrainingDto();
         trainingDto.setPersonName(name);
         trainingDto.setRpm(rpm);
-        trainingDto.setDuration(durationInMinutes);
+        trainingDto.setDuration(durationInSeconds);
         trainingDto.setAverage(average);
 
         txtAverageRpm.setText(String.valueOf(BigDecimal.valueOf(average).setScale(2, RoundingMode.HALF_UP)));
-        txtDuration.setText(String.valueOf(durationInMinutes) + getString(R.string.minutes));
+        txtDuration.setText(String.valueOf(durationInSeconds) + getString(R.string.minutes));
     }
 
     /**
@@ -191,13 +190,14 @@ public class DisplayGraphActivity extends AppCompatActivity {
         return false;
     }
 
-    private static double calculateAverage(List<Integer> rpms) {
+    private static double calculateAverage(List<Integer> rpms, int durationInSeconds) {
         Integer sum = 0;
         if (!rpms.isEmpty()) {
             for (Integer mark : rpms) {
                 sum += mark;
             }
-            return sum.doubleValue() / rpms.size();
+//            return sum.doubleValue() / rpms.size();
+            return sum.doubleValue() / durationInSeconds;
         }
         return sum;
     }
