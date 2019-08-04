@@ -35,7 +35,8 @@ public class TrainingAdapter extends RecyclerView.Adapter<TrainingAdapter.Traini
     @Override
     public void onBindViewHolder(@NonNull TrainingViewHolder holder, int position) {
         holder.txtDuration.setText(String.valueOf(dataList.get(position).getDuration()));
-        holder.txtAverage.setText(String.valueOf(dataList.get(position).getAverage()));
+        holder.txtAverageRpm.setText(String.valueOf(dataList.get(position).getAvgRpm()));
+        holder.txtAverageByTime.setText(String.valueOf(dataList.get(position).getAvgRpmTime()));
         holder.card.setTitle(trimTrainingDate(dataList.get(position).getDate()));
     }
 
@@ -51,13 +52,14 @@ public class TrainingAdapter extends RecyclerView.Adapter<TrainingAdapter.Traini
 
     class TrainingViewHolder extends RecyclerView.ViewHolder {
 
-        TextView txtDuration, txtAverage;
+        TextView txtDuration, txtAverageRpm, txtAverageByTime;
         ExpandableCardView card;
 
         TrainingViewHolder(View itemView) {
             super(itemView);
             txtDuration = itemView.findViewById(R.id.txtDuration);
-            txtAverage = itemView.findViewById(R.id.txtAverage);
+            txtAverageRpm = itemView.findViewById(R.id.txtAverageRpm);
+            txtAverageByTime = itemView.findViewById(R.id.txtAverageByTime);
             card = itemView.findViewById(R.id.profile);
             card.findViewById(R.id.card).setBackgroundColor(Color.parseColor("#ebeef6"));
         }

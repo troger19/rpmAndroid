@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/app/app.iml" filepath="$PROJECT_DIR$/app/app.iml" />
+      <module fileurl="file://$PROJECT_DIR$/rpmAndroid.iml" filepath="$PROJECT_DIR$/rpmAndroid.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/rpmAndroid.iml" filepath="$PROJECT_DIR$/.idea/rpmAndroid.iml" />
       <module fileurl="file://$PROJECT_DIR$/waveform/waveform.iml" filepath="$PROJECT_DIR$/waveform/waveform.iml" />
     </modules>

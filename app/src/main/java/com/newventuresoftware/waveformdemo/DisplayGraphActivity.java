@@ -112,9 +112,10 @@ public class DisplayGraphActivity extends AppCompatActivity {
 
         LocalDateTime startTime = statistics.get(0).getLocalDateTime();
         LocalDateTime endTime = statistics.get(statistics.size() - 1).getLocalDateTime();
-        int durationInSeconds = Seconds.secondsBetween(startTime, endTime).getSeconds(); //TODO replace with seconds
+        int durationInSeconds = Seconds.secondsBetween(startTime, endTime).getSeconds();
 
-        double average = calculateAverage(rpm, durationInSeconds); //TODO Overall average?? rpms.size() -> durationInSecondes  / sumOfRpms
+        double averageRpmByTime = calculateAverageByTime(rpm, durationInSeconds);
+        double averageRpm = calculateRpmAverage(rpm);
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
         String name = preferences.getString("prf_username", "");
 
@@ -122,9 +123,10 @@ public class DisplayGraphActivity extends AppCompatActivity {
         trainingDto.setPersonName(name);
         trainingDto.setRpm(rpm);
         trainingDto.setDuration(durationInSeconds);
-        trainingDto.setAverage(average);
+        trainingDto.setAvgRpm(averageRpm);
+        trainingDto.setAvgRpmTime(averageRpmByTime);
 
-        txtAverageRpm.setText(String.valueOf(BigDecimal.valueOf(average).setScale(2, RoundingMode.HALF_UP)));
+        txtAverageRpm.setText(String.valueOf(BigDecimal.valueOf(averageRpm).setScale(2, RoundingMode.HALF_UP)));
         txtDuration.setText(String.valueOf(durationInSeconds) + getString(R.string.minutes));
     }
 
@@ -190,14 +192,37 @@ public class DisplayGraphActivity extends AppCompatActivity {
         return false;
     }
 
-    private static double calculateAverage(List<Integer> rpms, int durationInSeconds) {
+    /**
+     * Calculate average RPM through out the whole activity
+     *
+     * @param rpms              revolutions
+     * @param durationInSeconds duration of a training
+     * @return average RPM by mean of time
+     */
+    private static double calculateAverageByTime(List<Integer> rpms, int durationInSeconds) {
         Integer sum = 0;
         if (!rpms.isEmpty()) {
             for (Integer mark : rpms) {
                 sum += mark;
             }
-//            return sum.doubleValue() / rpms.size();
             return sum.doubleValue() / durationInSeconds;
+        }
+        return sum;
+    }
+
+    /**
+     * Calculate average RPM from the list of RPM
+     *
+     * @param rpms revolutions
+     * @return average revolution
+     */
+    private static double calculateRpmAverage(List<Integer> rpms) {
+        Integer sum = 0;
+        if (!rpms.isEmpty()) {
+            for (Integer mark : rpms) {
+                sum += mark;
+            }
+            return sum.doubleValue() / rpms.size();
         }
         return sum;
     }
