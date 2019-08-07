@@ -1,6 +1,7 @@
 package com.newventuresoftware.waveformdemo;
 
 
+import java.math.BigDecimal;
 import java.util.Date;
 import java.util.List;
 
@@ -9,8 +10,8 @@ public class TrainingDto {
     private List<Integer> rpm;
     private Integer duration;
     private String personName;
-    private double avgRpm;
-    private double avgRpmTime;
+    private BigDecimal avgRpm;
+    private BigDecimal avgRpmTime;
 
     public List<Integer> getRpm() {
         return rpm;
@@ -36,11 +37,11 @@ public class TrainingDto {
         this.personName = personName;
     }
 
-    public double getAvgRpm() {
+    public BigDecimal getAvgRpm() {
         return avgRpm;
     }
 
-    public void setAvgRpm(double avgRpm) {
+    public void setAvgRpm(BigDecimal avgRpm) {
         this.avgRpm = avgRpm;
     }
 
@@ -52,11 +53,11 @@ public class TrainingDto {
         this.date = date;
     }
 
-    public double getAvgRpmTime() {
+    public BigDecimal getAvgRpmTime() {
         return avgRpmTime;
     }
 
-    public void setAvgRpmTime(double avgRpmTime) {
+    public void setAvgRpmTime(BigDecimal avgRpmTime) {
         this.avgRpmTime = avgRpmTime;
     }
 }

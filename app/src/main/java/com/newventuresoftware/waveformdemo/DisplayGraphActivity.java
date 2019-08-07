@@ -22,7 +22,6 @@ import org.joda.time.Seconds;
 
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -37,7 +36,7 @@ import retrofit2.converter.gson.GsonConverterFactory;
 
 public class DisplayGraphActivity extends AppCompatActivity {
     private static final String TAG = DisplayGraphActivity.class.getSimpleName();
-    private TextView txtAverageRpm, txtDuration;
+    private TextView txtAverageRpm, txtAverageRpmTime, txtDuration;
     private JsonPlaceHolderApi jsonPlaceHolderApi;
     private TrainingDto trainingDto;
     private static final String BASE_URL = MainActivity.BASE_URL;
@@ -53,6 +52,7 @@ public class DisplayGraphActivity extends AppCompatActivity {
         setContentView(R.layout.activity_display_graph);
         btnSave = findViewById(R.id.btnSaveTraining);
         txtAverageRpm = findViewById(R.id.txtAverageRpm);
+        txtAverageRpmTime = findViewById(R.id.txtAverageRpmTime);
         txtDuration = findViewById(R.id.txtDuration);
         preferences = PreferenceManager.getDefaultSharedPreferences(this);
         name = preferences.getString("prf_username", "");
@@ -114,8 +114,8 @@ public class DisplayGraphActivity extends AppCompatActivity {
         LocalDateTime endTime = statistics.get(statistics.size() - 1).getLocalDateTime();
         int durationInSeconds = Seconds.secondsBetween(startTime, endTime).getSeconds();
 
-        double averageRpmByTime = calculateAverageByTime(rpm, durationInSeconds);
-        double averageRpm = calculateRpmAverage(rpm);
+        BigDecimal averageRpmByTime = calculateAverageByTime(rpm, durationInSeconds);
+        BigDecimal averageRpm = calculateRpmAverage(rpm);
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
         String name = preferences.getString("prf_username", "");
 
@@ -126,8 +126,9 @@ public class DisplayGraphActivity extends AppCompatActivity {
         trainingDto.setAvgRpm(averageRpm);
         trainingDto.setAvgRpmTime(averageRpmByTime);
 
-        txtAverageRpm.setText(String.valueOf(BigDecimal.valueOf(averageRpm).setScale(2, RoundingMode.HALF_UP)));
-        txtDuration.setText(String.valueOf(durationInSeconds) + getString(R.string.minutes));
+        txtAverageRpm.setText(String.valueOf(averageRpm));
+        txtAverageRpmTime.setText(String.valueOf(averageRpmByTime));
+        txtDuration.setText(RpmUtil.getTrainingTime(durationInSeconds));
     }
 
     /**
@@ -176,7 +177,6 @@ public class DisplayGraphActivity extends AppCompatActivity {
                         startActivity(intent);
                     } catch (IOException e) {
                         Log.e(TAG, "IOException: " + e);
-                        ;
                     }
                     return;
                 }
@@ -199,15 +199,16 @@ public class DisplayGraphActivity extends AppCompatActivity {
      * @param durationInSeconds duration of a training
      * @return average RPM by mean of time
      */
-    private static double calculateAverageByTime(List<Integer> rpms, int durationInSeconds) {
+    private static BigDecimal calculateAverageByTime(List<Integer> rpms, int durationInSeconds) {
         Integer sum = 0;
         if (!rpms.isEmpty()) {
             for (Integer mark : rpms) {
                 sum += mark;
             }
-            return sum.doubleValue() / durationInSeconds;
+            BigDecimal averageRpmByTime = BigDecimal.valueOf(sum.doubleValue() / durationInSeconds);
+            return averageRpmByTime.setScale(1, BigDecimal.ROUND_HALF_UP);
         }
-        return sum;
+        return BigDecimal.valueOf(sum);
     }
 
     /**
@@ -216,14 +217,15 @@ public class DisplayGraphActivity extends AppCompatActivity {
      * @param rpms revolutions
      * @return average revolution
      */
-    private static double calculateRpmAverage(List<Integer> rpms) {
+    private static BigDecimal calculateRpmAverage(List<Integer> rpms) {
         Integer sum = 0;
         if (!rpms.isEmpty()) {
             for (Integer mark : rpms) {
                 sum += mark;
             }
-            return sum.doubleValue() / rpms.size();
+            BigDecimal averageRpm = BigDecimal.valueOf(sum.doubleValue() / rpms.size());
+            return averageRpm.setScale(1, BigDecimal.ROUND_HALF_UP);
         }
-        return sum;
+        return BigDecimal.valueOf(sum);
     }
 }

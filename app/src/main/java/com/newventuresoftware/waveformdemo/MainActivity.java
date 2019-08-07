@@ -82,6 +82,7 @@ public class MainActivity extends AppCompatActivity {
         final int btnStopColor = ContextCompat.getColor(getBaseContext(), R.color.button_stop);
         preferences = PreferenceManager.getDefaultSharedPreferences(this);
         name = preferences.getString("prf_username", "");
+        allRpms.add(0L);
 
         // Initialize Handler.
         createUpdateUiHandler();
@@ -296,12 +297,13 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private double rpmAverage() {
+    private BigDecimal rpmAverage() {
         double total = 0;
         for (Long element : allRpms) {
             total += element;
         }
-        return total / allRpms.size();
+        BigDecimal averageRpm = BigDecimal.valueOf(total / allRpms.size());
+        return averageRpm.setScale(1, BigDecimal.ROUND_HALF_UP);
     }
 
 }

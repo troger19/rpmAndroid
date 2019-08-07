@@ -83,8 +83,10 @@
     <string name="save_training">Save Training</string>
     <string name="activity_summary">Activity Summary</string>
     <string name="average_rpm">Average RPM :</string>
+    <string name="average_rpm_time">Average RPM/Time :</string>
     <string name="duration">Duration :</string>
-    <string name="minutes">min.</string>
+    <string name="minutes"> min.</string>
+    <string name="seconds"> sec.</string>
     <string name="welcome_user_message">"Welcome "</string>
     <string name="training_card_color">#d5edf2</string>
 </resources>

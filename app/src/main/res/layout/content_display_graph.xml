@@ -66,6 +66,20 @@
                 android:padding="5dip">
 
                 <TextView
+                    android:text="@string/average_rpm_time"
+                    android:textColor="@android:color/holo_blue_light" />
+
+                <TextView
+                    android:id="@+id/txtAverageRpmTime"
+                    android:textColor="@android:color/holo_red_dark" />
+            </TableRow>
+
+            <TableRow
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:padding="5dip">
+
+                <TextView
                     android:text="@string/duration"
                     android:textColor="@android:color/holo_blue_light" />
 

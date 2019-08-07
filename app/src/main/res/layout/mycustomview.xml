@@ -9,7 +9,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:paddingLeft="15dp"
-        android:text="Duration: "
+        android:text="Time: "
         android:textColor="@android:color/holo_blue_light" />
 
     <TextView
@@ -27,7 +27,7 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Average RPM: "
+        android:text="Avg RPM: "
         android:textColor="@android:color/holo_blue_light" />
 
     <TextView
@@ -45,7 +45,7 @@
     <TextView
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="RPM/time: "
+        android:text="RPM/t: "
         android:textColor="@android:color/holo_blue_light" />
 
     <TextView

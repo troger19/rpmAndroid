@@ -34,7 +34,7 @@ public class TrainingAdapter extends RecyclerView.Adapter<TrainingAdapter.Traini
 
     @Override
     public void onBindViewHolder(@NonNull TrainingViewHolder holder, int position) {
-        holder.txtDuration.setText(String.valueOf(dataList.get(position).getDuration()));
+        holder.txtDuration.setText(RpmUtil.getTrainingTime(dataList.get(position).getDuration()));
         holder.txtAverageRpm.setText(String.valueOf(dataList.get(position).getAvgRpm()));
         holder.txtAverageByTime.setText(String.valueOf(dataList.get(position).getAvgRpmTime()));
         holder.card.setTitle(trimTrainingDate(dataList.get(position).getDate()));
