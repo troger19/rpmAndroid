@@ -3,6 +3,8 @@
     <color name="colorPrimaryDark">#ff9800</color>
     <color name="colorPrimary">#607d8b</color>
     <color name="colorAccent">#ff4081</color>
+    <color name="colorBlack">#000000</color>
+    <color name="colorWhite">#FFFFFF</color>
     <color name="background">#393a3a</color>
     <color name="button_start">@android:color/holo_green_light</color>
     <color name="button_stop">@android:color/holo_red_dark</color>
@@ -10,5 +12,5 @@
     <color name="medium_speed">#ebe70e</color>
     <color name="low_speed">#359405</color>
     <color name="card_background">#ebeef6</color>
-    <color name="timer">#7bdf01</color>
+    <color name="timer">#9AF73B</color>
 </resources>

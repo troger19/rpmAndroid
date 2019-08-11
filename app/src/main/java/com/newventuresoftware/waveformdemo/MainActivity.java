@@ -1,17 +1,3 @@
-/*
- * Licensed under the Apache License, Version 2.0 (the "License"); you may not
- * use this file except in compliance with the License. You may obtain a copy of
- * the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
- * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
- * License for the specific language governing permissions and limitations under
- * the License.
- */
-
 package com.newventuresoftware.waveformdemo;
 
 import android.content.Intent;
@@ -42,10 +28,6 @@ import java.text.MessageFormat;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Iterator;
-
-import okhttp3.OkHttpClient;
-import retrofit2.Retrofit;
-import retrofit2.converter.gson.GsonConverterFactory;
 
 public class MainActivity extends AppCompatActivity {
     public static final String EXTRA_MESSAGE = "OverallStatistics";
@@ -90,7 +72,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onAudioDataReceived(short[] data, long difference) {
                 double rpm = (60 / (double) difference) * 1000;
-                long value[] = {difference, (long) rpm};
+                long[] value = {difference, (long) rpm};
                 OverallStatistics overallStatistics = new OverallStatistics(org.joda.time.LocalDateTime.now(), (long) rpm);
                 overall.add(overallStatistics);
                 // Build message object.
@@ -138,16 +120,6 @@ public class MainActivity extends AppCompatActivity {
 
 
         textView.setText(welcomeUserMessage);
-        // REST client initialization
-        AuthenticationInterceptor interceptor = new AuthenticationInterceptor();
-        OkHttpClient client = new OkHttpClient.Builder().addInterceptor(interceptor).build();
-        Retrofit retrofit = new Retrofit.Builder()
-                .baseUrl(BASE_URL)
-                .client(client)
-                .addConverterFactory(GsonConverterFactory.create())
-                .build();
-
-        jsonPlaceHolderApi = retrofit.create(JsonPlaceHolderApi.class);
     }
 
     @Override
@@ -157,7 +129,6 @@ public class MainActivity extends AppCompatActivity {
         textView.setText(MessageFormat.format("{0}{1}", getString(R.string.welcome_user_message), name));
     }
 
-
     protected void stop() {
         super.onStop();
         mRecordingThread.stopRecording();
@@ -166,9 +137,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * Help method for output real time values
+     * Help method for output the real time values
      *
-     * @param text
+     * @param text text
      */
     private void updateText(String text) {
         textView.setText(text);

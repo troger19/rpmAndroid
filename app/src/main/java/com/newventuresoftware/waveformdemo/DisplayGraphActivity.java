@@ -79,7 +79,23 @@ public class DisplayGraphActivity extends AppCompatActivity {
                 .build();
 
         jsonPlaceHolderApi = retrofit.create(JsonPlaceHolderApi.class);
+        wakeupPing();
         convertToTrainingDto(list);
+    }
+
+    private void wakeupPing() {
+        Call<ResponseBody> call = jsonPlaceHolderApi.healthCheck();
+        call.enqueue(new Callback<ResponseBody>() {
+            @Override
+            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
+                Log.i(TAG, "Health check " + response.message());
+            }
+
+            @Override
+            public void onFailure(Call<ResponseBody> call, Throwable t) {
+                Toast.makeText(DisplayGraphActivity.this, t.getMessage(), Toast.LENGTH_LONG).show();
+            }
+        });
     }
 
     /**

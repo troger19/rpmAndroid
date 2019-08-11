@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@drawable/zabak1"
+    android:background="@drawable/zabak2"
     android:gravity="center_horizontal"
     android:keepScreenOn="true"
     android:orientation="vertical"
@@ -27,9 +27,11 @@
         app:sv_mediumSpeedColor="@color/medium_speed"
         app:sv_mediumSpeedPercent="75"
         app:sv_speedTextSize="25dp"
+        app:sv_speedTextColor="@color/colorWhite"
         app:sv_textSize="18dp"
         app:sv_tickNumber="6"
         app:sv_unit="rpm"
+        app:sv_unitTextColor="@color/colorWhite"
         app:sv_unitTextSize="20dp"
         app:sv_withTremble="false" />
 
@@ -38,7 +40,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:gravity="center_horizontal"
-        android:textColor="@android:color/holo_blue_light"
+        android:textColor="@color/medium_speed"
         android:textSize="24sp" />
 
     <Chronometer

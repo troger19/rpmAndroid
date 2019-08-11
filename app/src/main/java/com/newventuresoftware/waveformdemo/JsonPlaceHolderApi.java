@@ -17,8 +17,8 @@ public interface JsonPlaceHolderApi {
     @GET("person/{name}")
     Call<PersonDto> getPerson(@Path("name") String name);
 
-    @GET("training")
-    Call<List<TrainingDto>> getAllTrainings();
+    @GET("health")
+    Call<ResponseBody> healthCheck();
 
     @GET("training/{name}")
     Call<List<TrainingDto>> getTrainingsByName(@Path("name") String name);
