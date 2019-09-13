@@ -8,4 +8,15 @@
         android:singleLine="true"
         android:title="Username" />
 
+    <PreferenceScreen
+        android:key="prf_about"
+        android:title="About"
+        android:persistent="false">
+        <PreferenceScreen
+            android:title="Info"
+            android:key="prf_about_company"
+            android:inputType="textMultiLine"
+            android:summary="This application is the property of (®)Itible s.r.o. \nFor more information please contact itiblesro@gmail.com \nBackend is hosted at  \n : https://rpmbackend.herokuapp.com/  \nGithub : https://github.com/troger19/rpmAndroid"></PreferenceScreen>
+    </PreferenceScreen>
+
 </PreferenceScreen>
