@@ -14,31 +14,48 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Chronometer;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.github.anastr.speedviewlib.SpeedView;
 
+import java.io.IOException;
 import java.math.BigDecimal;
 import java.text.MessageFormat;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Iterator;
+import java.util.Objects;
+import java.util.Timer;
+import java.util.TimerTask;
+
+import okhttp3.OkHttpClient;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
 
 public class MainActivity extends AppCompatActivity {
     public static final String EXTRA_MESSAGE = "OverallStatistics";
+    private static final int firstDelay = 60_000;
+    private static final int repeatPeriod = 60_000;
     private RecordingThread mRecordingThread;
     private static final int REQUEST_RECORD_AUDIO = 13;
+    public static Long id;
+    private boolean exists;
     // This is the activity main thread Handler.
     private Handler updateUIHandler = null;
     private ArrayList<OverallStatistics> overall = new ArrayList<>();
     private JsonPlaceHolderApi jsonPlaceHolderApi;
     private static final String TAG = MainActivity.class.getSimpleName();
-    public static final String BASE_URL = "https://rpmbackend.herokuapp.com/";  //https://rpmbackend.herokuapp.com/   //http://192.168.100.41:8081/
+    public static final String BASE_URL = "https://rpmbackend.herokuapp.com/";  //https://rpmbackend.herokuapp.com/   //http://192.168.100.41:8081/   //http://192.168.43.52:8081/
 
     // Message type code.
     private final static int MESSAGE_UPDATE_TEXT_CHILD_THREAD = 1;
@@ -53,6 +70,12 @@ public class MainActivity extends AppCompatActivity {
     private SharedPreferences preferences;
     private static final int minRPM = 120;
     private static final int maxRPM = 15;
+    private RpmUtil rpmUtil;
+    int btnStopColor;
+
+    Timer timer;
+    TimerTask timerTask;
+    final Handler handler = new Handler();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,12 +84,11 @@ public class MainActivity extends AppCompatActivity {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         final int btnStartColor = ContextCompat.getColor(getBaseContext(), R.color.button_start);
-        final int btnStopColor = ContextCompat.getColor(getBaseContext(), R.color.button_stop);
+        btnStopColor = ContextCompat.getColor(getBaseContext(), R.color.button_stop);
         preferences = PreferenceManager.getDefaultSharedPreferences(this);
         name = preferences.getString("prf_username", "");
         allRpms.add(0L);
 
-        // Initialize Handler.
         createUpdateUiHandler();
         mRecordingThread = new RecordingThread(new AudioDataReceivedListener() {
             @Override
@@ -92,12 +114,10 @@ public class MainActivity extends AppCompatActivity {
         welcomeUserMessage = MessageFormat.format("{0}{1}", getString(R.string.welcome_user_message), name);
         btnStartStop.setOnClickListener(v -> {
             if (!mRecordingThread.recording()) {
-                startAudioRecordingSafe();
-                overall = new ArrayList<>();
-                textView.setText(R.string.activity_started);
-                btnStartStop.setBackgroundColor(btnStopColor);
-                btnStartStop.setText(R.string.stop);
-                startChronometer();
+                isExistingUser();
+//                if (exists) {
+//                    startTraining(btnStopColor);
+//                }
             } else {
                 stop();
                 mRecordingThread.stopRecording();
@@ -105,7 +125,7 @@ public class MainActivity extends AppCompatActivity {
                 btnStartStop.setBackgroundColor(btnStartColor);
                 btnStartStop.setText(R.string.start);
                 pauseChronometer();
-
+                stopTimerTask();
             }
         });
 
@@ -120,6 +140,30 @@ public class MainActivity extends AppCompatActivity {
 
 
         textView.setText(welcomeUserMessage);
+
+        // REST client initialization
+        AuthenticationInterceptor interceptor = new AuthenticationInterceptor();
+        OkHttpClient client = new OkHttpClient.Builder().addInterceptor(interceptor).build();
+        Retrofit retrofit = new Retrofit.Builder()
+                .baseUrl(BASE_URL)
+                .client(client)
+                .addConverterFactory(GsonConverterFactory.create())
+                .build();
+
+        jsonPlaceHolderApi = retrofit.create(JsonPlaceHolderApi.class);
+
+        rpmUtil = new RpmUtil();
+    }
+
+    private void startTraining(int btnStopColor) {
+        callSaveFirst();
+        startAudioRecordingSafe();
+        overall = new ArrayList<>();
+        textView.setText(R.string.activity_started);
+        btnStartStop.setBackgroundColor(btnStopColor);
+        btnStartStop.setText(R.string.stop);
+        startChronometer();
+        startTimer();
     }
 
     @Override
@@ -133,7 +177,7 @@ public class MainActivity extends AppCompatActivity {
         super.onStop();
         mRecordingThread.stopRecording();
         filterExtremeValues();
-        sendMessage();
+        displayTrainingSummary();
     }
 
     /**
@@ -226,7 +270,9 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void filterExtremeValues() {
-        overall.remove(1);
+        if (!overall.isEmpty()) {
+            overall.remove(0);
+        }
         Iterator<OverallStatistics> iter = overall.iterator();
         while (iter.hasNext()) {
             OverallStatistics statistics = iter.next();
@@ -236,7 +282,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public void sendMessage() {
+    public void displayTrainingSummary() {
         Intent intent = new Intent(this, DisplayGraphActivity.class);
         intent.putExtra(EXTRA_MESSAGE, overall);
         startActivity(intent);
@@ -275,6 +321,89 @@ public class MainActivity extends AppCompatActivity {
         }
         BigDecimal averageRpm = BigDecimal.valueOf(total / allRpms.size());
         return averageRpm.setScale(1, BigDecimal.ROUND_HALF_UP);
+    }
+
+    private void callSaveFirst() {
+        if (!exists) {
+            Toast.makeText(MainActivity.this, "User " + name + " does not exists", Toast.LENGTH_LONG).show();
+            return;
+        }
+        TrainingDto trainingDto = new TrainingDto();
+        trainingDto.setPersonName(name);
+        Call<Long> call = jsonPlaceHolderApi.createTraining(trainingDto);
+        call.enqueue(new Callback<Long>() {
+            @Override
+            public void onResponse(Call<Long> call, Response<Long> response) {
+                if (!response.isSuccessful()) {
+                    Toast.makeText(MainActivity.this, "Code: " + response.code(), Toast.LENGTH_LONG).show();
+                    Log.e(TAG, "Error calling Save Training: " + response.message());
+                    return;
+                }
+                Log.i(TAG, "Saving training with ID : " + response.body());
+                Toast.makeText(MainActivity.this, "Training Saved", Toast.LENGTH_LONG).show();
+                id = response.body();
+            }
+
+            @Override
+            public void onFailure(Call<Long> call, Throwable t) {
+                Toast.makeText(MainActivity.this, t.getMessage(), Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
+    private void isExistingUser() {
+        Call<PersonDto> call = jsonPlaceHolderApi.getPerson(name);
+        call.enqueue(new Callback<PersonDto>() {
+            @Override
+            public void onResponse(Call<PersonDto> call, Response<PersonDto> response) {
+                if (!response.isSuccessful()) {
+                    try {
+                        Log.e(TAG, "Error calling Get Person: " + Objects.requireNonNull(response.errorBody()).string());
+                        Intent intent = new Intent(MainActivity.this, SettingsActivity.class);
+                        startActivity(intent);
+                    } catch (IOException e) {
+                        Log.e(TAG, "IOException: " + e);
+                    }
+                    return;
+                }
+                Log.i(TAG, "Person exists " + response.message());
+                exists = response.body() != null;
+                startTraining(btnStopColor);
+            }
+
+            @Override
+            public void onFailure(Call<PersonDto> call, Throwable t) {
+                Toast.makeText(MainActivity.this, t.getMessage(), Toast.LENGTH_LONG).show();
+            }
+        });
+    }
+
+    public void startTimer() {
+        timer = new Timer();
+        initializeTimerTask();
+        //schedule the timer, after the first 60s the TimerTask will run every 60s
+
+        timer.schedule(timerTask, firstDelay, repeatPeriod); //
+    }
+
+    public void stopTimerTask() {
+        //stop the timer, if it's not already null
+        if (timer != null) {
+            timer.cancel();
+            timer = null;
+        }
+    }
+
+    public void initializeTimerTask() {
+        timerTask = new TimerTask() {
+            public void run() {
+                handler.post(() -> {
+                    TrainingDto trainingDto = rpmUtil.convertToTrainingDto(overall, MainActivity.this);
+                    rpmUtil.saveTraining(TAG, jsonPlaceHolderApi, trainingDto, MainActivity.this);
+                    Toast.makeText(getApplicationContext(), "Saving...", Toast.LENGTH_SHORT).show();
+                });
+            }
+        };
     }
 
 }

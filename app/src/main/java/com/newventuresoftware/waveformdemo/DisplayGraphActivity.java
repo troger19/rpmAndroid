@@ -17,14 +17,7 @@ import com.github.mikephil.charting.data.LineData;
 import com.github.mikephil.charting.data.LineDataSet;
 import com.github.mikephil.charting.interfaces.datasets.ILineDataSet;
 
-import org.joda.time.LocalDateTime;
-import org.joda.time.Seconds;
-
-import java.io.IOException;
-import java.math.BigDecimal;
 import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
 
 import okhttp3.OkHttpClient;
 import okhttp3.ResponseBody;
@@ -40,11 +33,13 @@ public class DisplayGraphActivity extends AppCompatActivity {
     private JsonPlaceHolderApi jsonPlaceHolderApi;
     private TrainingDto trainingDto;
     private static final String BASE_URL = MainActivity.BASE_URL;
-    private Button btnSave;
-    private boolean exists;
-    private String name;
+    public static Button btnSave;
+    private RpmUtil rpmUtil;
     SharedPreferences preferences;
 
+    public static Button getBtnSave() {
+        return btnSave;
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -55,12 +50,11 @@ public class DisplayGraphActivity extends AppCompatActivity {
         txtAverageRpmTime = findViewById(R.id.txtAverageRpmTime);
         txtDuration = findViewById(R.id.txtDuration);
         preferences = PreferenceManager.getDefaultSharedPreferences(this);
-        name = preferences.getString("prf_username", "");
+        rpmUtil = new RpmUtil();
 
         Intent intent = getIntent();
         ArrayList<OverallStatistics> list = (ArrayList<OverallStatistics>) intent.getSerializableExtra(MainActivity.EXTRA_MESSAGE);
 
-        //draw a chart
         LineChart lineChart = findViewById(R.id.chart);
         LineDataSet lineDataSet = new LineDataSet(createDataSet(list), "Training series");
         ArrayList<ILineDataSet> dataSet = new ArrayList<>();
@@ -80,7 +74,10 @@ public class DisplayGraphActivity extends AppCompatActivity {
 
         jsonPlaceHolderApi = retrofit.create(JsonPlaceHolderApi.class);
         wakeupPing();
-        convertToTrainingDto(list);
+        trainingDto = rpmUtil.convertToTrainingDto(list, DisplayGraphActivity.this);
+        txtAverageRpm.setText(String.valueOf(trainingDto.getAvgRpm()));
+        txtAverageRpmTime.setText(String.valueOf(trainingDto.getAvgRpmTime()));
+        txtDuration.setText(RpmUtil.getTrainingTime(trainingDto.getDuration()));
     }
 
     private void wakeupPing() {
@@ -113,135 +110,14 @@ public class DisplayGraphActivity extends AppCompatActivity {
     }
 
     /**
-     * method extract from recorded object and transform it to training representation - > DTO
-     *
-     * @param statistics the recorded object with timestamp and RPM
-     */
-    private void convertToTrainingDto(ArrayList<OverallStatistics> statistics) {
-        if (statistics.size() == 0) {
-            return;
-        }
-        List<Integer> rpm = new ArrayList<>();
-        for (OverallStatistics overallStatistics : statistics) {
-            rpm.add((int) overallStatistics.getRpm());
-        }
-
-        LocalDateTime startTime = statistics.get(0).getLocalDateTime();
-        LocalDateTime endTime = statistics.get(statistics.size() - 1).getLocalDateTime();
-        int durationInSeconds = Seconds.secondsBetween(startTime, endTime).getSeconds();
-
-        BigDecimal averageRpmByTime = calculateAverageByTime(rpm, durationInSeconds);
-        BigDecimal averageRpm = calculateRpmAverage(rpm);
-        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-        String name = preferences.getString("prf_username", "");
-
-        trainingDto = new TrainingDto();
-        trainingDto.setPersonName(name);
-        trainingDto.setRpm(rpm);
-        trainingDto.setDuration(durationInSeconds);
-        trainingDto.setAvgRpm(averageRpm);
-        trainingDto.setAvgRpmTime(averageRpmByTime);
-
-        txtAverageRpm.setText(String.valueOf(averageRpm));
-        txtAverageRpmTime.setText(String.valueOf(averageRpmByTime));
-        txtDuration.setText(RpmUtil.getTrainingTime(durationInSeconds));
-    }
-
-    /**
-     * REST call to backend servis to save the training
+     * REST call to backend service to save the training
      *
      * @param view this
      */
     public void saveTraining(View view) {
-        isExistingUser();
-        if (!exists) {
-            Toast.makeText(DisplayGraphActivity.this, "User " + name + " does not exists", Toast.LENGTH_LONG).show();
-            return;
-        }
-        Call<ResponseBody> call = jsonPlaceHolderApi.createTraining(trainingDto);
-        call.enqueue(new Callback<ResponseBody>() {
-            @Override
-            public void onResponse(Call<ResponseBody> call, Response<ResponseBody> response) {
-                if (!response.isSuccessful()) {
-                    Toast.makeText(DisplayGraphActivity.this, "Code: " + response.code(), Toast.LENGTH_LONG).show();
-                    Log.e(TAG, "Error calling Save Training: " + response.message());
-                    return;
-                }
-                Log.i(TAG, "Saving training: " + response.message());
-                Toast.makeText(DisplayGraphActivity.this, "Training Saved", Toast.LENGTH_LONG).show();
-                btnSave.setEnabled(false);
-            }
-
-            @Override
-            public void onFailure(Call<ResponseBody> call, Throwable t) {
-                Toast.makeText(DisplayGraphActivity.this, t.getMessage(), Toast.LENGTH_LONG).show();
-            }
-        });
-    }
-
-    private boolean isExistingUser() {
-        name = preferences.getString("prf_username", "");
-        Call<PersonDto> call = jsonPlaceHolderApi.getPerson(name);
-
-        call.enqueue(new Callback<PersonDto>() {
-            @Override
-            public void onResponse(Call<PersonDto> call, Response<PersonDto> response) {
-                if (!response.isSuccessful()) {
-                    try {
-                        Log.e(TAG, "Error calling Get Person: " + Objects.requireNonNull(response.errorBody()).string());
-                        Intent intent = new Intent(DisplayGraphActivity.this, SettingsActivity.class);
-                        startActivity(intent);
-                    } catch (IOException e) {
-                        Log.e(TAG, "IOException: " + e);
-                    }
-                    return;
-                }
-                Log.i(TAG, "Person exists " + response.message());
-                exists = response.body() != null;
-            }
-
-            @Override
-            public void onFailure(Call<PersonDto> call, Throwable t) {
-                Toast.makeText(DisplayGraphActivity.this, t.getMessage(), Toast.LENGTH_LONG).show();
-            }
-        });
-        return false;
-    }
-
-    /**
-     * Calculate average RPM through out the whole activity
-     *
-     * @param rpms              revolutions
-     * @param durationInSeconds duration of a training
-     * @return average RPM by mean of time
-     */
-    private static BigDecimal calculateAverageByTime(List<Integer> rpms, int durationInSeconds) {
-        Integer sum = 0;
-        if (!rpms.isEmpty()) {
-            for (Integer mark : rpms) {
-                sum += mark;
-            }
-            BigDecimal averageRpmByTime = BigDecimal.valueOf(sum.doubleValue() / durationInSeconds);
-            return averageRpmByTime.setScale(1, BigDecimal.ROUND_HALF_UP);
-        }
-        return BigDecimal.valueOf(sum);
-    }
-
-    /**
-     * Calculate average RPM from the list of RPM
-     *
-     * @param rpms revolutions
-     * @return average revolution
-     */
-    private static BigDecimal calculateRpmAverage(List<Integer> rpms) {
-        Integer sum = 0;
-        if (!rpms.isEmpty()) {
-            for (Integer mark : rpms) {
-                sum += mark;
-            }
-            BigDecimal averageRpm = BigDecimal.valueOf(sum.doubleValue() / rpms.size());
-            return averageRpm.setScale(1, BigDecimal.ROUND_HALF_UP);
-        }
-        return BigDecimal.valueOf(sum);
+        rpmUtil.saveTraining(TAG, jsonPlaceHolderApi, trainingDto, DisplayGraphActivity.this);
+//        if (RpmUtil.isSaved) {
+//            btnSave.setEnabled(false);
+//        }
     }
 }
