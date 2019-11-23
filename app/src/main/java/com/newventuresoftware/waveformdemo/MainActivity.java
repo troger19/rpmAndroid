@@ -399,7 +399,7 @@ public class MainActivity extends AppCompatActivity {
             public void run() {
                 handler.post(() -> {
                     TrainingDto trainingDto = rpmUtil.convertToTrainingDto(overall, MainActivity.this);
-                    rpmUtil.saveTraining(TAG, jsonPlaceHolderApi, trainingDto, MainActivity.this);
+                    rpmUtil.saveTraining(TAG, jsonPlaceHolderApi, trainingDto, MainActivity.this, false);
                     Toast.makeText(getApplicationContext(), "Saving...", Toast.LENGTH_SHORT).show();
                 });
             }

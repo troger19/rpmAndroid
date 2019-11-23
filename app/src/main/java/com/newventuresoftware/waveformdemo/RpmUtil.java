@@ -103,7 +103,7 @@ public class RpmUtil {
         return BigDecimal.valueOf(sum);
     }
 
-    public void saveTraining(String TAG, JsonPlaceHolderApi jsonPlaceHolderApi, TrainingDto trainingDto, Context context) {
+    public void saveTraining(String TAG, JsonPlaceHolderApi jsonPlaceHolderApi, TrainingDto trainingDto, Context context, boolean finished) {
         Log.i(TAG, "idecko je : " + MainActivity.id);
         Call<Long> call = jsonPlaceHolderApi.updateTraining(MainActivity.id, trainingDto);
         call.enqueue(new Callback<Long>() {
@@ -112,13 +112,13 @@ public class RpmUtil {
                 if (!response.isSuccessful()) {
                     Toast.makeText(context, "Code: " + response.code(), Toast.LENGTH_LONG).show();
                     Log.e(TAG, "Error calling Save Training: " + response.message());
-//                    isSaved= false;
                     return;
                 }
                 Log.i(TAG, "Saving training: " + response.body());
                 Toast.makeText(context, "Training Saved", Toast.LENGTH_LONG).show();
-//                    isSaved= true;
-                DisplayGraphActivity.getBtnSave().setEnabled(false);
+                if (finished) {
+                    DisplayGraphActivity.getBtnSave().setEnabled(false);
+                }
             }
 
             @Override

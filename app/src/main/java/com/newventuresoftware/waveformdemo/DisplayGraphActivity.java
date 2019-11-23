@@ -115,9 +115,6 @@ public class DisplayGraphActivity extends AppCompatActivity {
      * @param view this
      */
     public void saveTraining(View view) {
-        rpmUtil.saveTraining(TAG, jsonPlaceHolderApi, trainingDto, DisplayGraphActivity.this);
-//        if (RpmUtil.isSaved) {
-//            btnSave.setEnabled(false);
-//        }
+        rpmUtil.saveTraining(TAG, jsonPlaceHolderApi, trainingDto, DisplayGraphActivity.this, true);
     }
 }
