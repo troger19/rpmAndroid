@@ -3,23 +3,16 @@ package com.newventuresoftware.waveformdemo;
 
 import java.math.BigDecimal;
 import java.util.Date;
-import java.util.List;
+import java.util.Map;
 
 public class TrainingDto {
     private Date date;
-    private List<Integer> rpm;
+    private Map<Integer, Integer> rpm;
     private Integer duration;
     private String personName;
     private BigDecimal avgRpm;
     private BigDecimal avgRpmTime;
 
-    public List<Integer> getRpm() {
-        return rpm;
-    }
-
-    public void setRpm(List<Integer> rpm) {
-        this.rpm = rpm;
-    }
 
     public Integer getDuration() {
         return duration;
@@ -59,5 +52,14 @@ public class TrainingDto {
 
     public void setAvgRpmTime(BigDecimal avgRpmTime) {
         this.avgRpmTime = avgRpmTime;
+    }
+
+
+    public Map<Integer, Integer> getRpm() {
+        return rpm;
+    }
+
+    public void setRpm(Map<Integer, Integer> rpm) {
+        this.rpm = rpm;
     }
 }

@@ -11,7 +11,9 @@ import org.joda.time.Seconds;
 
 import java.math.BigDecimal;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import retrofit2.Call;
@@ -19,8 +21,6 @@ import retrofit2.Callback;
 import retrofit2.Response;
 
 public class RpmUtil {
-
-//    static boolean isSaved = false;
 
     public static String getTrainingTime(long aSeconds) {
         StringBuilder s = new StringBuilder();
@@ -39,11 +39,14 @@ public class RpmUtil {
             return null;
         }
         List<Integer> rpm = new ArrayList<>();
+        LocalDateTime startTime = statistics.get(0).getLocalDateTime();
+        Map<Integer, Integer> rpm1 = new HashMap<>();
         for (OverallStatistics overallStatistics : statistics) {
             rpm.add((int) overallStatistics.getRpm());
+            int seconds = Seconds.secondsBetween(startTime, overallStatistics.getLocalDateTime()).getSeconds();
+            rpm1.put(seconds, (int) overallStatistics.getRpm());
         }
 
-        LocalDateTime startTime = statistics.get(0).getLocalDateTime();
         LocalDateTime endTime = statistics.get(statistics.size() - 1).getLocalDateTime();
         int durationInSeconds = Seconds.secondsBetween(startTime, endTime).getSeconds();
 
@@ -54,16 +57,12 @@ public class RpmUtil {
 
         TrainingDto trainingDto = new TrainingDto();
         trainingDto.setPersonName(name);
-        trainingDto.setRpm(rpm);
+        trainingDto.setRpm(rpm1);
         trainingDto.setDuration(durationInSeconds);
         trainingDto.setAvgRpm(averageRpm);
         trainingDto.setAvgRpmTime(averageRpmByTime);
 
         return trainingDto;
-
-//        txtAverageRpm.setText(String.valueOf(averageRpm));
-//        txtAverageRpmTime.setText(String.valueOf(averageRpmByTime));
-//        txtDuration.setText(RpmUtil.getTrainingTime(durationInSeconds));
     }
 
     /**
@@ -124,8 +123,15 @@ public class RpmUtil {
             @Override
             public void onFailure(Call<Long> call, Throwable t) {
                 Toast.makeText(context, t.getMessage(), Toast.LENGTH_LONG).show();
-//                isSaved= false;
             }
         });
+    }
+
+    public int sumRpm(List<OverallStatistics> overall) {
+        int sum = 0;
+        for (OverallStatistics overallStatistic : overall) {
+            sum += (int) overallStatistic.getRpm();
+        }
+        return sum;
     }
 }

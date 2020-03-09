@@ -24,16 +24,21 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.github.anastr.speedviewlib.SpeedView;
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.math.BigDecimal;
 import java.text.MessageFormat;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Iterator;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 import okhttp3.OkHttpClient;
 import retrofit2.Call;
@@ -59,7 +64,7 @@ public class MainActivity extends AppCompatActivity {
 
     // Message type code.
     private final static int MESSAGE_UPDATE_TEXT_CHILD_THREAD = 1;
-    private TextView textView;
+    private TextView textView, txtCompare;
     private SpeedView speedometer;
     private Button btnStartStop, btnTrainings;
     private String name;
@@ -71,7 +76,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int minRPM = 120;
     private static final int maxRPM = 15;
     private RpmUtil rpmUtil;
-    int btnStopColor;
+    int btnStartColor, btnStopColor;
 
     Timer timer;
     TimerTask timerTask;
@@ -83,11 +88,12 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-        final int btnStartColor = ContextCompat.getColor(getBaseContext(), R.color.button_start);
+        btnStartColor = ContextCompat.getColor(getBaseContext(), R.color.button_start);
         btnStopColor = ContextCompat.getColor(getBaseContext(), R.color.button_stop);
         preferences = PreferenceManager.getDefaultSharedPreferences(this);
         name = preferences.getString("prf_username", "");
         allRpms.add(0L);
+        saveMap();
 
         createUpdateUiHandler();
         mRecordingThread = new RecordingThread(new AudioDataReceivedListener() {
@@ -124,7 +130,7 @@ public class MainActivity extends AppCompatActivity {
                 textView.setText(welcomeUserMessage);
                 btnStartStop.setBackgroundColor(btnStartColor);
                 btnStartStop.setText(R.string.start);
-                pauseChronometer();
+                stopChronometer();
                 stopTimerTask();
             }
         });
@@ -133,6 +139,8 @@ public class MainActivity extends AppCompatActivity {
         speedometer = findViewById(R.id.speedView);
         speedometer.speedTo(50);
         textView = findViewById(R.id.textView2);
+        textView.setVisibility(View.INVISIBLE);
+        txtCompare = findViewById(R.id.txtCompare);
         chronometer = findViewById(R.id.chronometer);
         chronometer.setFormat("%s");
         chronometer.setBase(SystemClock.elapsedRealtime());
@@ -176,7 +184,7 @@ public class MainActivity extends AppCompatActivity {
     protected void stop() {
         super.onStop();
         mRecordingThread.stopRecording();
-        filterExtremeValues();
+//        filterExtremeValues();
         displayTrainingSummary();
     }
 
@@ -269,22 +277,32 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void filterExtremeValues() {
-        if (!overall.isEmpty()) {
-            overall.remove(0);
-        }
-        Iterator<OverallStatistics> iter = overall.iterator();
-        while (iter.hasNext()) {
-            OverallStatistics statistics = iter.next();
-            if (statistics.getRpm() > minRPM || statistics.getRpm() < maxRPM) {
-                iter.remove();
+    private ArrayList<OverallStatistics> filterExtremeValues() {
+//        if (!overall.isEmpty() &&(overall.get(0).getRpm() > minRPM || overallStatistics.getRpm() < maxRPM)) {
+//                overall.remove(0);
+//            }
+//        }
+//        Iterator<OverallStatistics> iter = overall.iterator();
+//        while (iter.hasNext()) {
+//            OverallStatistics statistics = iter.next();
+//            if (statistics.getRpm() > minRPM || statistics.getRpm() < maxRPM) {
+//                iter.remove();
+//            }
+//        }
+        CopyOnWriteArrayList<OverallStatistics> copyOnWriteArrayList = new CopyOnWriteArrayList(overall);
+
+        for (OverallStatistics overallStatistics : copyOnWriteArrayList) {
+            if (overallStatistics.getRpm() > minRPM || overallStatistics.getRpm() < maxRPM) {
+                copyOnWriteArrayList.remove(overallStatistics);
             }
         }
+
+        return new ArrayList<>(copyOnWriteArrayList);
     }
 
     public void displayTrainingSummary() {
         Intent intent = new Intent(this, DisplayGraphActivity.class);
-        intent.putExtra(EXTRA_MESSAGE, overall);
+        intent.putExtra(EXTRA_MESSAGE, filterExtremeValues());
         startActivity(intent);
     }
 
@@ -303,7 +321,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    public void pauseChronometer() {
+    public void stopChronometer() {
         if (running) {
             chronometer.stop();
             chronometer.setBase(SystemClock.elapsedRealtime());
@@ -383,7 +401,8 @@ public class MainActivity extends AppCompatActivity {
         initializeTimerTask();
         //schedule the timer, after the first 60s the TimerTask will run every 60s
 
-        timer.schedule(timerTask, firstDelay, repeatPeriod); //
+//        timer.schedule(timerTask, firstDelay, repeatPeriod); //
+        timer.schedule(timerTask, 10_000, 10_000); //
     }
 
     public void stopTimerTask() {
@@ -398,12 +417,49 @@ public class MainActivity extends AppCompatActivity {
         timerTask = new TimerTask() {
             public void run() {
                 handler.post(() -> {
-                    TrainingDto trainingDto = rpmUtil.convertToTrainingDto(overall, MainActivity.this);
+                    TrainingDto trainingDto = rpmUtil.convertToTrainingDto(filterExtremeValues(), MainActivity.this);
                     rpmUtil.saveTraining(TAG, jsonPlaceHolderApi, trainingDto, MainActivity.this, false);
                     Toast.makeText(getApplicationContext(), "Saving...", Toast.LENGTH_SHORT).show();
+                    int actualRpmSum = rpmUtil.sumRpm(overall);
+                    int elapsedSeconds = (int) (SystemClock.elapsedRealtime() - chronometer.getBase()) / 1000;
+                    Integer recordValue = getRecordValue(elapsedSeconds);
+                    txtCompare.setText(String.valueOf(actualRpmSum));
+                    if (actualRpmSum > recordValue) {
+                        txtCompare.setTextColor(btnStartColor);
+                    } else {
+                        txtCompare.setTextColor(btnStopColor);
+                    }
                 });
             }
         };
     }
 
+    private void saveMap() {
+        Map<Integer, Integer> record = new HashMap<>();
+        record.put(10, 500);
+        record.put(20, 1000);
+        record.put(30, 1500);
+        record.put(40, 2000);
+        record.put(50, 2500);
+        record.put(60, 3000);
+
+        String converted = new Gson().toJson(record);
+
+        preferences.edit().putString("REFERENCED_TRAINING", converted).apply();
+    }
+
+
+    private Integer getRecordValue(Integer second) {
+        String jano = preferences.getString("REFERENCED_TRAINING", "");
+        Gson gson = new Gson();
+        Type type = new TypeToken<Map<Integer, Integer>>() {
+        }.getType();
+        Map<Integer, Integer> map = gson.fromJson(jano, type);
+        Integer sumOfRpm = map.get(second);
+        if (sumOfRpm == null) {
+            Log.e(TAG, "No reference sum was found for second: " + second);
+            return 0;
+        }
+        return sumOfRpm;
+    }
 }
